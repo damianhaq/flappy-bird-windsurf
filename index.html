@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Flappy Bird</title>
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <!-- Firebase Database -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
         body {
             display: flex;
@@ -11,6 +17,7 @@
             margin: 0;
             background-color: #87CEEB;
             font-family: Arial, sans-serif;
+            touch-action: none;
         }
         #game-container {
             text-align: center;
@@ -18,71 +25,112 @@
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 95vw;
+            position: relative;
         }
         canvas {
             border: 2px solid #2c3e50;
             border-radius: 5px;
             display: block;
             margin: 0 auto;
+            max-width: 100%;
+            touch-action: none;
         }
-        #scoreboard {
-            width: 300px;
-            margin: 20px auto;
+        #start-screen, #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 100;
+            width: 80%;
+            max-width: 300px;
+        }
+        input, button {
+            margin: 10px;
             padding: 10px;
-            background-color: #f8f9fa;
+            font-size: 16px;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #ccc;
+            width: 80%;
+            max-width: 250px;
         }
-        #player-form {
-            margin: 20px 0;
-        }
-        #player-form input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-right: 10px;
-        }
-        #player-form button {
-            padding: 8px 16px;
-            background-color: #2ecc71;
+        button {
+            background: #2c3e50;
             color: white;
             border: none;
-            border-radius: 4px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            min-height: 44px;
         }
-        #player-form button:hover {
-            background-color: #27ae60;
+        button:hover {
+            background: #34495e;
         }
-        .hidden {
-            display: none;
+        #highscores {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        #highscores h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
         }
         #highscores div {
-            padding: 5px;
-            border-bottom: 1px solid #eee;
+            margin: 5px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+            border: 1px solid #e9ecef;
+            text-align: left;
         }
         #highscores div:nth-child(1) {
-            color: gold;
-            font-weight: bold;
+            background: #ffd700;
+            color: #000;
         }
         #highscores div:nth-child(2) {
-            color: silver;
+            background: #c0c0c0;
+            color: #000;
         }
         #highscores div:nth-child(3) {
-            color: #cd7f32;
+            background: #cd7f32;
+            color: #000;
+        }
+        @media (max-width: 600px) {
+            #game-container {
+                padding: 10px;
+            }
+            canvas {
+                width: 100%;
+                height: auto;
+            }
         }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="player-form">
-            <input type="text" id="player-name" placeholder="Wpisz swoje imię">
-            <button onclick="startGame()">Start gry</button>
+        <div id="start-screen">
+            <h2>Flappy Bird</h2>
+            <input type="text" id="playerName" placeholder="Wpisz swój nick" autocomplete="username">
+            <button onclick="startGame()">Start</button>
+            <div id="highscores">
+                <h3>Najlepsze wyniki</h3>
+            </div>
         </div>
-        <canvas id="gameCanvas" width="400" height="600" class="hidden"></canvas>
-        <div id="scoreboard">
-            <h2>Najlepsze wyniki:</h2>
-            <div id="highscores"></div>
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        <div id="game-over" style="display: none;">
+            <h2>Koniec gry!</h2>
+            <p>Twój wynik: <span id="final-score">0</span></p>
+            <button onclick="restartGame()">Zagraj ponownie</button>
+            <div id="highscores-game-over">
+                <h3>Najlepsze wyniki</h3>
+            </div>
         </div>
     </div>
     <script src="game.js"></script>
