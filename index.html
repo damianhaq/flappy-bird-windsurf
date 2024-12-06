@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flappy Bird</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #87CEEB;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px solid #2c3e50;
+            border-radius: 5px;
+            display: block;
+            margin: 0 auto;
+        }
+        #scoreboard {
+            width: 300px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #player-form {
+            margin: 20px 0;
+        }
+        #player-form input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+        #player-form button {
+            padding: 8px 16px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #player-form button:hover {
+            background-color: #27ae60;
+        }
+        .hidden {
+            display: none;
+        }
+        #highscores div {
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        #highscores div:nth-child(1) {
+            color: gold;
+            font-weight: bold;
+        }
+        #highscores div:nth-child(2) {
+            color: silver;
+        }
+        #highscores div:nth-child(3) {
+            color: #cd7f32;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="player-form">
+            <input type="text" id="player-name" placeholder="Wpisz swoje imię">
+            <button onclick="startGame()">Start gry</button>
+        </div>
+        <canvas id="gameCanvas" width="400" height="600" class="hidden"></canvas>
+        <div id="scoreboard">
+            <h2>Najlepsze wyniki:</h2>
+            <div id="highscores"></div>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>

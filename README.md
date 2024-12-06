@@ -1,26 +1,25 @@
 # Flappy Bird Online
 
-Multiplayer Flappy Bird game with online leaderboard.
+Gra Flappy Bird z rankingiem najlepszych wyników. Gra działa bezpośrednio w przeglądarce i zapisuje wyniki lokalnie.
 
-## Development Setup
+## Jak grać
 
-1. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+1. Otwórz [stronę gry](https://TWOJ-USERNAME.github.io/NAZWA-REPO)
+2. Wpisz swoje imię
+3. Steruj ptakiem używając spacji lub klikając myszką
+4. Unikaj rur i zdobywaj punkty
+5. Twój wynik zostanie zapisany w rankingu najlepszych graczy
 
-2. Run the development server:
-```bash
-python app.py
-```
+## Funkcje
 
-## Production Deployment
+- Płynna animacja i grafika
+- System punktacji
+- Ranking najlepszych 10 wyników
+- Responsywny design
+- Efekty wizualne (chmury, animacje)
 
-The game is configured to be deployed on Render.com:
+## Technologie
 
-1. Create a new Web Service on Render
-2. Connect your GitHub repository
-3. Use the following settings:
-   - Build Command: `pip install -r requirements.txt`
-   - Start Command: `gunicorn app:app`
-   - Python Version: 3.11
+- HTML5 Canvas
+- JavaScript
+- LocalStorage do przechowywania wyników
