@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flappy Bird</title>
+    <style>
+        canvas {
+            border: 1px solid black;
+            display: block;
+            margin: 0 auto;
+        }
+        #game-container {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        #scoreboard {
+            width: 300px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        #player-form {
+            margin: 20px 0;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="player-form">
+            <input type="text" id="player-name" placeholder="Wpisz swoje imię">
+            <button onclick="startGame()">Start gry</button>
+        </div>
+        <canvas id="gameCanvas" width="400" height="600" class="hidden"></canvas>
+        <div id="scoreboard">
+            <h2>Najlepsze wyniki:</h2>
+            <div id="highscores"></div>
+        </div>
+    </div>
+    <script src="/static/game.js" defer></script>
+</body>
+</html>
