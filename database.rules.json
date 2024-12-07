@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "scores": {
+      ".read": true,
+      ".write": true,
+      ".indexOn": ["player_name", "score"]
+    }
+  }
+}
