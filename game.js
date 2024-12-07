@@ -4,6 +4,8 @@ let canvas,
   score = 0;
 let playerName = "";
 let gameLoop;
+let bird;
+
 const GRAVITY = 0.35;
 const JUMP_FORCE = -7;
 const PIPE_SPEED = 1.5;
@@ -11,125 +13,98 @@ const PIPE_SPAWN_RATE = 150;
 let frameCount = 0;
 
 const clouds = [
-  { x: 50, y: 100, speed: 0.5, size: 1 },
-  { x: 200, y: 150, speed: 0.3, size: 1.2 },
+  { x: 100, y: 100, speed: 0.5, size: 1 },
+  { x: 300, y: 50, speed: 0.3, size: 0.7 },
+  { x: 500, y: 150, speed: 0.4, size: 0.9 },
+  { x: 700, y: 60, speed: 0.6, size: 0.6 },
+  { x: 900, y: 120, speed: 0.35, size: 0.8 },
   { x: 350, y: 80, speed: 0.4, size: 0.8 },
 ];
 
-const bird = {
-  x: 50,
-  y: 300,
-  velocity: 0,
-  width: 30,
-  height: 30,
-  jump() {
-    this.velocity = JUMP_FORCE;
-  },
+class Bird {
+  constructor() {
+    this.x = 50;
+    this.y = canvas.height / 2;
+    this.velocity = 0;
+    this.gravity = 0.6 * (canvas.height / 600); 
+    this.lift = -10 * (canvas.height / 600); 
+    this.size = Math.max(20, canvas.width / 20); 
+  }
+
   update() {
-    this.velocity += GRAVITY;
+    this.velocity += this.gravity;
     this.y += this.velocity;
 
-    if (this.y < 0) this.y = 0;
-    if (this.y > canvas.height - this.height) {
+    // Kolizja z podłożem
+    if (this.y + this.size > canvas.height) {
       gameOver();
+      return;
     }
-  },
+
+    // Kolizja z górą
+    if (this.y - this.size < 0) {
+      this.y = this.size;
+      this.velocity = 0;
+    }
+  }
+
+  jump() {
+    this.velocity = this.lift;
+  }
+
   draw() {
-    // Bird body
-    ctx.fillStyle = "#f1c40f";
+    // Ciało ptaka
+    ctx.fillStyle = "#f4d03f";
     ctx.beginPath();
-    ctx.ellipse(
-      this.x + this.width / 2,
-      this.y + this.height / 2,
-      this.width / 2,
-      this.height / 2,
-      0,
-      0,
-      Math.PI * 2
-    );
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
     ctx.fill();
 
-    // Eye
-    ctx.fillStyle = "black";
-    ctx.beginPath();
-    ctx.arc(
-      this.x + this.width * 0.7,
-      this.y + this.height * 0.4,
-      3,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-
-    // Beak
+    // Dziób
     ctx.fillStyle = "#e67e22";
     ctx.beginPath();
-    ctx.moveTo(this.x + this.width * 0.8, this.y + this.height * 0.5);
-    ctx.lineTo(this.x + this.width * 1.2, this.y + this.height * 0.5);
-    ctx.lineTo(this.x + this.width * 0.8, this.y + this.height * 0.7);
+    ctx.moveTo(this.x + this.size, this.y);
+    ctx.lineTo(this.x + this.size + 10, this.y - 5);
+    ctx.lineTo(this.x + this.size + 10, this.y + 5);
+    ctx.closePath();
     ctx.fill();
-  },
-};
 
-class Pipe {
-  constructor() {
-    this.width = 50;
-    this.gap = 180;
-    this.x = canvas.width;
-    this.topHeight = Math.random() * (canvas.height - this.gap - 150) + 50;
-    this.bottomY = this.topHeight + this.gap;
-    this.scored = false;
-  }
+    // Oko
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(this.x + this.size/2, this.y - this.size/3, this.size/4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Źrenica
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(this.x + this.size/2, this.y - this.size/3, this.size/8, 0, Math.PI * 2);
+    ctx.fill();
 
-  update() {
-    this.x -= PIPE_SPEED;
-
-    // Score point when passing pipe
-    if (!this.scored && this.x + this.width < bird.x) {
-      score++;
-      this.scored = true;
-    }
-  }
-
-  draw() {
-    ctx.fillStyle = "#2ecc71";
-    // Top pipe
-    ctx.fillRect(this.x, 0, this.width, this.topHeight);
-    // Bottom pipe
-    ctx.fillRect(
-      this.x,
-      this.bottomY,
-      this.width,
-      canvas.height - this.bottomY
+    // Skrzydło
+    ctx.fillStyle = "#f39c12";
+    ctx.beginPath();
+    ctx.ellipse(
+      this.x - this.size/2,
+      this.y,
+      this.size/2,
+      this.size,
+      Math.PI/4,
+      0,
+      Math.PI * 2
     );
-
-    // Pipe caps
-    ctx.fillStyle = "#27ae60";
-    // Top cap
-    ctx.fillRect(this.x - 5, this.topHeight - 20, this.width + 10, 20);
-    // Bottom cap
-    ctx.fillRect(this.x - 5, this.bottomY, this.width + 10, 20);
-  }
-
-  collidesWith(bird) {
-    return (
-      bird.x < this.x + this.width &&
-      bird.x + bird.width > this.x &&
-      (bird.y < this.topHeight || bird.y + bird.height > this.bottomY)
-    );
+    ctx.fill();
   }
 }
 
 let currentRanking = [];
 let playerPosition = 0;
 let lastRankingUpdate = 0;
-const RANKING_UPDATE_INTERVAL = 5000; // 5 sekund
+const RANKING_UPDATE_INTERVAL = 5000; 
 
-// Zoptymalizowana funkcja updateRanking
 function updateRanking(force = false) {
   const now = Date.now();
   if (!force && now - lastRankingUpdate < RANKING_UPDATE_INTERVAL) {
-    return; // Zbyt wcześnie na aktualizację
+    return; 
   }
   
   lastRankingUpdate = now;
@@ -145,7 +120,6 @@ function updateRanking(force = false) {
       });
     }
 
-    // Zapisz lokalnie
     localStorage.setItem('lastRanking', JSON.stringify({
       timestamp: now,
       data: currentRanking
@@ -154,14 +128,12 @@ function updateRanking(force = false) {
     updateRankingDisplay();
   }, (error) => {
     console.error('Error fetching ranking:', error);
-    // Użyj zapisanych lokalnie danych w przypadku błędu
     const cachedRanking = localStorage.getItem('lastRanking');
     if (cachedRanking) {
       const parsed = JSON.parse(cachedRanking);
       currentRanking = parsed.data;
       updateRankingDisplay();
     } else {
-      // Jeśli nie ma cache'u, pokaż pusty ranking
       currentRanking = [];
       updateRankingDisplay();
     }
@@ -186,31 +158,49 @@ function updateRankingDisplay() {
 }
 
 function startGame() {
-  // Pobierz nick z inputa lub z localStorage
   const inputElement = document.getElementById("playerName");
   playerName = (inputElement ? inputElement.value : "") || localStorage.getItem("playerName") || "Anonymous";
   localStorage.setItem("playerName", playerName);
 
-  // Ukryj ekran startowy
   const startScreen = document.getElementById("start-screen");
   if (startScreen) startScreen.style.display = "none";
 
-  // Ukryj ekran końca gry
   const gameOver = document.getElementById("game-over");
   if (gameOver) gameOver.style.display = "none";
 
-  // Inicjalizacja canvas
-  canvas = document.getElementById("gameCanvas");
+  canvas = document.createElement("canvas");
   ctx = canvas.getContext("2d");
+  
+  // Dodaj style do canvas
+  canvas.style.border = "3px solid #2c3e50";
+  canvas.style.borderRadius = "10px";
+  canvas.style.display = "block";
+  canvas.style.margin = "20px auto";
+  canvas.style.maxWidth = "100%";
+  canvas.style.touchAction = "none";
+  
+  function resizeCanvas() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      canvas.width = window.innerWidth - 20; 
+      canvas.height = Math.min(window.innerHeight * 0.6, 600); 
+    } else {
+      canvas.width = 400;
+      canvas.height = 600;
+    }
+  }
 
-  // Obsługa kliknięć i dotknięć
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  document.querySelector(".game-area").appendChild(canvas);
+
   canvas.addEventListener("click", () => bird.jump());
   canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
     bird.jump();
   });
 
-  // Obsługa spacji
   document.addEventListener("keydown", (e) => {
     if (e.code === "Space") {
       e.preventDefault();
@@ -218,48 +208,51 @@ function startGame() {
     }
   });
 
-  // Reset stanu gry
-  bird.y = 300;
+  // Inicjalizacja ptaka po utworzeniu canvas
+  bird = new Bird();
+  bird.y = canvas.height / 2;
   bird.velocity = 0;
   pipes = [];
   score = 0;
   frameCount = 0;
 
-  // Start gry
   gameLoop = setInterval(update, 1000 / 60);
   loadHighScores();
-  updateRanking(); // Start updating ranking
+  updateRanking(); 
   syncPendingScores();
 }
 
 function update() {
-  // Update game state
-  bird.update();
+  frameCount++;
 
-  // Update clouds
+  // Aktualizuj ptaka
+  bird.update();
+  
+  // Jeśli ptak spadł na ziemię, nie kontynuuj aktualizacji
+  if (bird.y + bird.size > canvas.height) {
+    return;
+  }
+
   clouds.forEach((cloud) => {
     cloud.x -= cloud.speed;
     if (cloud.x + 100 < 0) {
       cloud.x = canvas.width + 50;
-      cloud.y = Math.random() * 200 + 50;
     }
   });
 
-  // Spawn new pipes
-  if (frameCount % PIPE_SPAWN_RATE === 0) {
+  if (frameCount % 150 === 0) {
     pipes.push(new Pipe());
   }
 
-  // Update pipes and check collisions
   for (let i = pipes.length - 1; i >= 0; i--) {
     pipes[i].update();
 
-    // Remove pipes that are off screen
     if (pipes[i].x + pipes[i].width < 0) {
       pipes.splice(i, 1);
+      continue;
     }
-    // Check for collisions
-    else if (pipes[i].collidesWith(bird)) {
+
+    if (pipes[i].collidesWith(bird)) {
       gameOver();
       return;
     }
@@ -269,32 +262,30 @@ function update() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Draw background
-  ctx.fillStyle = "#87CEEB";
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, "#87CEEB");  // Jasne niebo na górze
+  gradient.addColorStop(1, "#4CA1AF");  // Ciemniejsze na dole
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Draw clouds
   ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
   clouds.forEach((cloud) => drawCloud(cloud.x, cloud.y, cloud.size));
 
+  // Draw pipes
   pipes.forEach((pipe) => pipe.draw());
+
+  // Draw bird
   bird.draw();
+
+  // Draw ground
+  ctx.fillStyle = "#2ecc71";
+  ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
 
   // Draw score
   ctx.fillStyle = "#2c3e50";
-  ctx.font = "24px 'Roboto'";
+  ctx.font = "bold 24px 'Roboto'";
   ctx.fillText(`Score: ${score}`, 10, 30);
-
-  if (score > 0) {
-    // Update player's score in real-time
-    const dbRef = firebase.database().ref('scores');
-    dbRef.orderByChild('player_name').equalTo(playerName).once('value', (snapshot) => {
-      if (!snapshot.exists() || (snapshot.val() && Object.values(snapshot.val())[0].score < score)) {
-        saveScore();
-      }
-    });
-  }
-
-  frameCount++;
 }
 
 function drawCloud(x, y, size) {
@@ -314,13 +305,16 @@ function drawCloud(x, y, size) {
 
 function gameOver() {
   clearInterval(gameLoop);
-  const finalScore = document.getElementById("final-score");
-  if (finalScore) finalScore.textContent = score;
-  
   const gameOverScreen = document.getElementById("game-over");
-  if (gameOverScreen) gameOverScreen.style.display = "block";
-  
+  if (gameOverScreen) {
+    gameOverScreen.style.display = "block";
+    const finalScore = document.getElementById("final-score");
+    if (finalScore) {
+      finalScore.textContent = score;
+    }
+  }
   saveScore();
+  loadHighScores();
 }
 
 function restartGame() {
@@ -330,23 +324,19 @@ function restartGame() {
   startGame();
 }
 
-// Zoptymalizowana funkcja loadHighScores
 async function loadHighScores() {
   try {
-    // Najpierw sprawdź cache
     const cachedScores = localStorage.getItem('lastRanking');
     if (cachedScores) {
       const parsed = JSON.parse(cachedScores);
       const age = Date.now() - parsed.timestamp;
       
-      // Jeśli cache jest świeży (mniej niż 5 sekund), użyj go
       if (age < RANKING_UPDATE_INTERVAL) {
         displayScores(parsed.data);
         return;
       }
     }
 
-    // Jeśli cache jest nieaktualny lub nie istnieje, pobierz z Firebase
     if (database) {
       const snapshot = await database
         .ref("scores")
@@ -361,7 +351,6 @@ async function loadHighScores() {
         });
       }
 
-      // Zapisz do cache
       localStorage.setItem('lastRanking', JSON.stringify({
         timestamp: Date.now(),
         data: scores
@@ -371,13 +360,11 @@ async function loadHighScores() {
     }
   } catch (error) {
     console.error("Error loading scores:", error);
-    // W przypadku błędu, spróbuj użyć cache
     const cachedScores = localStorage.getItem('lastRanking');
     if (cachedScores) {
       const parsed = JSON.parse(cachedScores);
       displayScores(parsed.data);
     } else {
-      // Jeśli nie ma cache'u, pokaż pusty ranking
       displayScores([]);
     }
   }
@@ -406,7 +393,6 @@ function displayScores(scores) {
   });
 }
 
-// Zoptymalizowana funkcja saveScore
 async function saveScore() {
   if (!playerName || score === 0) return;
 
@@ -419,7 +405,6 @@ async function saveScore() {
   try {
     const dbRef = firebase.database().ref('scores');
     
-    // Sprawdź czy gracz już ma zapisany wynik
     const playerScores = await dbRef
       .orderByChild('player_name')
       .equalTo(playerName)
@@ -428,7 +413,6 @@ async function saveScore() {
     let updates = {};
     
     if (playerScores.exists()) {
-      // Znajdź najwyższy wynik gracza
       let highestScore = 0;
       let highestScoreKey = null;
       
@@ -440,73 +424,60 @@ async function saveScore() {
         }
       });
 
-      // Aktualizuj tylko jeśli nowy wynik jest wyższy
       if (score > highestScore) {
         if (highestScoreKey) {
           updates[`/scores/${highestScoreKey}`] = scoreData;
         } else {
-          // Jeśli z jakiegoś powodu nie znaleziono klucza, dodaj nowy wpis
           const newScoreRef = dbRef.push();
           updates[`/scores/${newScoreRef.key}`] = scoreData;
         }
       }
       
-      // Usuń pozostałe wyniki tego gracza
       playerScores.forEach((childSnapshot) => {
         if (childSnapshot.key !== highestScoreKey) {
           updates[`/scores/${childSnapshot.key}`] = null;
         }
       });
     } else {
-      // Nowy gracz - dodaj wynik
       const newScoreRef = dbRef.push();
       updates[`/scores/${newScoreRef.key}`] = scoreData;
     }
 
-    // Wykonaj aktualizacje w jednej transakcji
-    if (Object.keys(updates).length > 0) {
-      await database.ref().update(updates);
+    await database.ref().update(updates);
       
-      // Usuń stare wyniki (zostaw tylko top 100)
-      const allScores = await dbRef
-        .orderByChild('score')
-        .once('value');
+    const allScores = await dbRef
+      .orderByChild('score')
+      .once('value');
       
-      if (allScores.exists()) {
-        const scores = [];
-        allScores.forEach((childSnapshot) => {
-          scores.push({
-            key: childSnapshot.key,
-            ...childSnapshot.val()
-          });
+    if (allScores.exists()) {
+      const scores = [];
+      allScores.forEach((childSnapshot) => {
+        scores.push({
+          key: childSnapshot.key,
+          ...childSnapshot.val()
         });
+      });
 
-        // Sortuj malejąco po wyniku
-        scores.sort((a, b) => b.score - a.score);
+      scores.sort((a, b) => b.score - a.score);
 
-        // Usuń wyniki poza top 100
-        if (scores.length > 100) {
-          const deletions = {};
-          scores.slice(100).forEach((score) => {
-            deletions[`/scores/${score.key}`] = null;
-          });
-          await database.ref().update(deletions);
-        }
+      if (scores.length > 100) {
+        const deletions = {};
+        scores.slice(100).forEach((score) => {
+          deletions[`/scores/${score.key}`] = null;
+        });
+        await database.ref().update(deletions);
       }
-
-      // Aktualizuj ranking
-      updateRanking(true);
     }
+
+    updateRanking(true);
   } catch (error) {
     console.error('Error saving score:', error);
-    // Zapisz lokalnie w przypadku błędu
     const pendingScores = JSON.parse(localStorage.getItem('pendingScores') || '[]');
     pendingScores.push(scoreData);
     localStorage.setItem('pendingScores', JSON.stringify(pendingScores));
   }
 }
 
-// Funkcja do synchronizacji zaległych wyników
 function syncPendingScores() {
   const pendingScores = JSON.parse(localStorage.getItem('pendingScores') || '[]');
   if (pendingScores.length === 0) return;
@@ -524,14 +495,58 @@ function syncPendingScores() {
     if (successfulSaves === pendingScores.length) {
       localStorage.removeItem('pendingScores');
     } else {
-      // Zachowaj tylko niezsynchronizowane wyniki
       const remainingScores = pendingScores.filter((_, index) => !results[index]);
       localStorage.setItem('pendingScores', JSON.stringify(remainingScores));
     }
   });
 }
 
-// Wczytaj zapisany nick przy starcie
+class Pipe {
+  constructor() {
+    this.width = Math.max(40, canvas.width / 10); 
+    this.gap = Math.max(160, canvas.height / 3); 
+    this.x = canvas.width;
+    this.topHeight = Math.random() * (canvas.height - this.gap - 150) + 50;
+    this.bottomY = this.topHeight + this.gap;
+    this.speed = 3 * (canvas.width / 400); 
+    this.scored = false;
+  }
+
+  update() {
+    this.x -= this.speed;
+    
+    // Dodaj punkt gdy ptak przeleci przez rurę
+    if (!this.scored && this.x + this.width < bird.x) {
+      score++;
+      this.scored = true;
+    }
+  }
+
+  draw() {
+    ctx.fillStyle = "#2ecc71";
+    ctx.fillRect(this.x, 0, this.width, this.topHeight);
+    ctx.fillRect(this.x, this.bottomY, this.width, canvas.height - this.bottomY);
+  }
+
+  collidesWith(bird) {
+    if (
+      bird.x + bird.size > this.x &&
+      bird.x - bird.size < this.x + this.width &&
+      bird.y - bird.size < this.topHeight
+    ) {
+      return true;
+    }
+    if (
+      bird.x + bird.size > this.x &&
+      bird.x - bird.size < this.x + this.width &&
+      bird.y + bird.size > this.bottomY
+    ) {
+      return true;
+    }
+    return false;
+  }
+}
+
 window.onload = function() {
   const savedName = localStorage.getItem("playerName");
   if (savedName) {

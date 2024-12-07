@@ -66,14 +66,6 @@
         background: #f1c40f;
         font-weight: bold;
       }
-      canvas {
-        border: 3px solid #2c3e50;
-        border-radius: 10px;
-        display: block;
-        margin: 20px auto;
-        max-width: 100%;
-        touch-action: none;
-      }
       #start-screen,
       #game-over {
         position: absolute;
@@ -188,9 +180,63 @@
         #game-container {
           padding: 15px;
         }
-        canvas {
+      }
+      /* Style dla urządzeń mobilnych */
+      @media screen and (max-width: 768px) {
+        #game-container {
+          flex-direction: column;
+          padding: 10px;
+          max-width: 100vw;
+          margin: 0;
+          border-radius: 0;
+          min-height: 100vh;
+          justify-content: flex-start;
+        }
+
+        .game-area {
           width: 100%;
-          height: auto;
+          flex: none;
+        }
+
+        #ranking-panel {
+          width: 100%;
+          margin-top: 10px;
+          padding: 10px;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+
+        input, button {
+          width: 90%;
+          max-width: none;
+          margin: 10px auto;
+          padding: 12px;
+          font-size: 16px;
+        }
+
+        #start-screen, #game-over {
+          width: 90%;
+          padding: 20px;
+          max-width: none;
+        }
+
+        body {
+          padding: 0;
+          margin: 0;
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* Poprawki dla iPhone */
+        @supports (-webkit-touch-callout: none) {
+          #game-container {
+            min-height: -webkit-fill-available;
+          }
+          
+          body {
+            min-height: -webkit-fill-available;
+          }
         }
       }
     </style>
@@ -208,7 +254,6 @@
           />
           <button onclick="startGame()">Start</button>
         </div>
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
         <div id="game-over" style="display: none">
           <h2>Koniec gry!</h2>
           <p>Twój wynik: <span id="final-score">0</span></p>
@@ -219,13 +264,12 @@
               <div><i class="fas fa-crown"></i> 1. Player: Score</div>
               <div><i class="fas fa-medal"></i> 2. Player: Score</div>
               <div><i class="fas fa-award"></i> 3. Player: Score</div>
-              <!-- Add more scores here -->
             </div>
           </div>
         </div>
       </div>
       <div id="ranking-panel">
-        <h3>Ranking</h3>
+        <h3>Ranking na żywo</h3>
         <div id="ranking-list"></div>
       </div>
     </div>
